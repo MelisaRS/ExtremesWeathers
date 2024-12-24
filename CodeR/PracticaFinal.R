@@ -1,6 +1,7 @@
 library(ggplot2)
 
 # Establecer el directorio de trabajo al directorio del archivo .R
+print(getwd())
 setwd(dirname(rstudioapi::getSourceEditorContext()$path))
 
 # Función para cargar y visualizacion de los datos
@@ -11,7 +12,7 @@ load_data <- function(file_path) {
   print(head(df))
   print("################## SUMMARY INICIAL ##################")
   # Mostrar el resumen de los datos
-  summary_statistics(df)
+  print(summary(df))
   return(df)
 }
 
@@ -61,7 +62,7 @@ list_states <- function(df) {
   
   # Obtener la lista de países únicos correspondientes a los estados
   unique_countries <- unique(unique_states$Country)
-
+  
   cat("Número total de estados:", total_states, "\n")
   cat("Países correspondientes de todos los estados:\n")
   print(unique_countries)
@@ -143,7 +144,7 @@ main <- function(file_path) {
   cleaned_df <- clean_data(initial_df)
   plot_temperature_distribution_Celsius(cleaned_df)
   final_data(cleaned_df)
-
+  
   
 }
 
