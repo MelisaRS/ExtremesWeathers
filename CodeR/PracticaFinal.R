@@ -8,7 +8,9 @@ setwd(dirname(rstudioapi::getSourceEditorContext()$path))
 load_data <- function(file_path) {
   df <- read.csv(file_path) 
   View(data)
+  print("################## DATA INICIAL ##################")
   print(head(df))
+  print("################## SUMMARY INICIAL ##################")
   # Mostrar el resumen de los datos
   summary_statistics(df)
   return(df)
@@ -16,10 +18,11 @@ load_data <- function(file_path) {
 
 exploration_data <- function(df){
   
+  print("################## EXPLORACION DE DATOS ##################")
   # Country
   #print(unique(df$Country)) 
   num_countries <- length(unique(df$Country))
-  cat("El número de ciudades únicas es:", num_countries, "\n")
+  cat("El número de ciudades es:", num_countries, "\n")
   
   countries_states(df)
   
@@ -43,7 +46,7 @@ countries_states <- function(df) {
   paises_unicos_encontrados <- unique(paises_encontrados$Country)
   
   # Mostrar los países encontrados
-  cat("Países encontrados en el dataset:\n")
+  cat("Países encontrados en el dataset que deberian de tener State:\n")
   print(paises_unicos_encontrados)
 }
 
@@ -62,10 +65,10 @@ list_states <- function(df) {
   unique_countries <- unique(unique_states$Country)
   
   # Imprimir el número total de estados únicos
-  cat("Número total de estados únicos:", total_states, "\n")
+  cat("Número total de estados:", total_states, "\n")
   
   # Imprimir la lista de países correspondientes
-  cat("Países correspondientes:\n")
+  cat("Países correspondientes de todos los estados:\n")
   print(unique_countries)
 }
 
@@ -97,21 +100,25 @@ clean_data <- function(df) {
   total_filas_despues <- nrow(df)
   na_count_after <- sum(is.na(df))
   
+  print("################## LIMPIEZA DE DATOS ##################")
   # Mostrar resultados de la limpieza
   print("Resultados de la limpieza de NA")
+  print("Las filas con valor -99 en la columna AvgTemperature fueron colocados como valores NA")
+  print("ya que -99 en esa columna significa la inexistencia de ese valor")
   cat("Total de filas antes de la limpieza:", total_filas_anterior, "\n")
   cat("Total de filas después de la limpieza:", total_filas_despues, "\n")
   cat("Cantidad de NA eliminados:", total_filas_anterior - total_filas_despues, "\n")
   cat("Total de NAs en el dataset antes de la limpieza:", na_count_before, "\n")
   cat("Total de NAs en el dataset después de la limpieza:", na_count_after, "\n")
   
-  #eliminando columna State
-  df <- df[, !names(df) %in% c("State")]
-  print("Columna State eliminada")
-  
   # Crear una nueva columna Date combinando Year, Month y Day
   df$Date <- as.Date(paste(df$Year, df$Month, df$Day, sep = "-"), format = "%Y-%m-%d")
   
+  #eliminando columna Innecesarias
+  df <- df[, !names(df) %in% c("State", "Day", "Month", "Year")]
+  print("Columna State, Day, Month y Year eliminadas")
+  
+  print("################## NUEVO DATASET ##################")
   print(head(df))
   
   return(df)  # Retorna el dataframe limpio
@@ -136,36 +143,98 @@ plot_temperature_distribution_Celsius <- function(df) {
   print(p)
 }
 
-# Función para mostrar el resumen de los datos
-summary_statistics <- function(df) {
+# Función para visualizar datos finales
+final_data <- function(df) {
+  print("################## DATA FINAL ##################")
+  # Mostrar el resumen de los datos
   print(summary(df))
+  View(df)
 }
+
+# Función para crear un boxplot
+plot_boxplot <- function(df, title) {
+  p <-  ggplot(df, aes(y = AvgTemperature)) +
+        geom_boxplot(fill = "blue", alpha = 0.7, outlier.color = "red", outlier.shape = 16) +
+        theme_minimal() +
+        labs(title = title, y = "AvgTemperature (Fahrenheit)") +
+        theme(plot.title = element_text(hjust = 0.5))
+  # Devolver el objeto de la gráfica para que pueda ser visualizado
+  print(p)
+}
+
+plot_boxplot2 <- function(df, title){
+  p <- boxplot(df$AvgTemperature,
+               main = title,
+               ylab = "avgTemperature (Fahrenheit)",
+               col = "lightblue",
+               outline = TRUE)
+  # Devolver el objeto de la gráfica para que pueda ser visualizado
+  return(p)
+}
+
+plot_temperature_history <- function(df, country) {
+  # Filtrar el dataset para el país seleccionado
+  df_us <- subset(df, Country == country)
+  
+  # Crear el gráfico
+  p <- ggplot(df_us, aes(x = Date, y = AvgTemperature_Celsius)) +
+    geom_line(color = "blue") +
+    labs(title = paste("Historial de Temperaturas en", country),
+         x = "Fecha",
+         y = "Temperatura promedio (°C)") +
+    theme_minimal()
+  
+  # Mostrar el gráfico
+  print(p)
+}
+
+save_cleaned_df <- function(df, file_path){
+  # Guardar el dataset limpio en un archivo CSV
+  write.csv(df, file_path, row.names = FALSE)
+}
+
 
 # Función principal para ejecutar todo el proceso
 main <- function(file_path) {
   
   # Cargar los datos
-  df <- load_data(file_path)
+  initial_df <- load_data(file_path)
   
-  exploration_data(df)
+  exploration_data(initial_df)
 
   # Mostrar la distribución de temperaturas en Fahrenheit
-  plot_temperature_distribution_Fahrenheit(df)
+  plot_temperature_distribution_Fahrenheit(initial_df)
+  
+  # Crear boxplot para el dataset inicial
+  plot_initial <- plot_boxplot(initial_df, "Boxplot de AvgTemperature (Dataset Inicial)")
+  #print(plot_initial)
   
   # Limpiar los datos
-  df <- clean_data(df)
+  cleaned_df <- clean_data(initial_df)
   
   # Convertir a Celsius
-  df <- convert_to_celsius(df)
+  cleaned_df <- convert_to_celsius(cleaned_df)
   
   # Verificar las primeras filas de la conversión
-  print(head(df[, c("AvgTemperature", "AvgTemperature_Celsius")]))
+  print(head(cleaned_df[, c("AvgTemperature", "AvgTemperature_Celsius")]))
   
   # Mostrar la distribución de temperaturas en Celsius
-  plot_temperature_distribution_Celsius(df)
+  plot_temperature_distribution_Celsius(cleaned_df)
   
-  # Mostrar el resumen de los datos
-  summary_statistics(df)
+  # Crear boxplot para el dataset limpio
+  plot_cleaned <- plot_boxplot(cleaned_df, "Boxplot de AvgTemperature (Dataset Limpio)")
+  #print(plot_cleaned)
+  
+  final_data(cleaned_df)
+  
+  #print(colnames(cleaned_df))
+  #print(unique(cleaned_df$Country))
+  
+  # Llamar a la función para graficar las temperaturas de US
+  plot_temperature_history(cleaned_df, "US")
+  #plot_temperature_history(cleaned_df, "Bolivia")
+  
+  save_cleaned_df(cleaned_df, "../data/cleaned_city_temperature.csv")
   
 }
 
