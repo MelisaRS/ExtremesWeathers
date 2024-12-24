@@ -145,7 +145,6 @@ main <- function(file_path) {
   plot_temperature_distribution_Celsius(cleaned_df)
   final_data(cleaned_df)
   
-  
 }
 
 main("../data/city_temperature.csv")
